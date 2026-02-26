@@ -20,16 +20,19 @@ jobs:
         with:
           go-version-file: "go.mod"
           check-latest: false
-      - name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+      - name: Verify Go build
+        run: go build -o terraform-provider-unifi .
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           version: latest
           args: release --parallelism 2 --clean
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload binaries to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/terraform-provider-unifi*
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

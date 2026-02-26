@@ -33,7 +33,7 @@ terraform {
     required_providers {
         unifi = {
             source  = "filipowm/unifi"
-            version = "~> 1.0.0"  # Use the latest version
+            version = "~> 1.0.1"  # Use the latest version
         }
     }
 }
