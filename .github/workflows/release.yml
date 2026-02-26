@@ -20,19 +20,22 @@ jobs:
         with:
           go-version-file: "go.mod"
           check-latest: false
-      - name: Verify Go build
-        run: go build -o terraform-provider-unifi .
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v6
-        with:
-          version: latest
-          args: release --parallelism 2 --clean
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload binaries to release
+      - name: Build binaries
+        run: |
+          # Build for Linux
+          GOOS=linux GOARCH=amd64 go build -o terraform-provider-unifi-linux-amd64 .
+          GOOS=linux GOARCH=arm64 go build -o terraform-provider-unifi-linux-arm64 .
+          
+          # Build for macOS
+          GOOS=darwin GOARCH=amd64 go build -o terraform-provider-unifi-darwin-amd64 .
+          GOOS=darwin GOARCH=arm64 go build -o terraform-provider-unifi-darwin-arm64 .
+          
+          # Build for Windows
+          GOOS=windows GOARCH=amd64 go build -o terraform-provider-unifi-windows-amd64.exe .
+          GOOS=windows GOARCH=arm64 go build -o terraform-provider-unifi-windows-arm64.exe .
+      - name: Create release
         uses: softprops/action-gh-release@v1
         with:
+          generate_release_notes: true
           files: |
-            dist/terraform-provider-unifi*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            terraform-provider-unifi-*
