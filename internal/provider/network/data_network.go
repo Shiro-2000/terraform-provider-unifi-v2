@@ -40,7 +40,7 @@ func DataNetwork() *schema.Resource {
 
 			// read-only / computed
 			"purpose": {
-				Description: "The purpose of the network. One of `corporate`, `guest`, `wan`, or `vlan-only`.",
+				Description: "The purpose of the network. One of `corporate`, `guest`, `wan`, `vlan-only`, or `vpn-client`.",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -374,6 +374,19 @@ func dataNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface
 			d.Set("wan_ipv6", n.WANIPV6)
 			d.Set("wan_gateway_v6", n.WANGatewayV6)
 			d.Set("wan_prefixlen", n.WANPrefixlen)
+
+			d.Set("vpn_type", n.VPNType)
+			d.Set("wireguard_client_mode", n.WireguardClientMode)
+			d.Set("wireguard_client_configuration_filename", n.WireguardClientConfigurationFilename)
+			d.Set("wireguard_client_configuration_file", n.WireguardClientConfigurationFile)
+			// d.Set("wireguard_id", n.WireguardId) // Field not in struct
+			// d.Set("routing_table_id", n.RoutingTableId) // Field not in struct
+			d.Set("firewall_zone_id", n.FirewallZoneID)
+			// d.Set("mss_clamp", n.MssClamp) // Field not in struct
+			// d.Set("mss_clamp_mss", n.MssClampMss) // Field not in struct
+			d.Set("interface_mtu", n.InterfaceMtu)
+			d.Set("interface_mtu_enabled", n.InterfaceMtuEnabled)
+			// d.Set("external_id", n.ExternalId) // Field not in struct
 
 			return nil
 		}

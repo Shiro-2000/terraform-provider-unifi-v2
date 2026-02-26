@@ -92,11 +92,12 @@ func ResourceNetwork() *schema.Resource {
 					"* `corporate` - Standard network for corporate use with full access\n" +
 					"* `guest` - Isolated network for guest access with limited permissions\n" +
 					"* `wan` - External network connection (WAN uplink)\n" +
-					"* `vlan-only` - VLAN network without DHCP services",
+					"* `vlan-only` - VLAN network without DHCP services\n" +
+					"* `vpn-client` - VPN client network (e.g., WireGuard)",
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"corporate", "guest", "wan", "vlan-only"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"corporate", "guest", "wan", "vlan-only", "vpn-client"}, false),
 			},
 			"vlan_id": {
 				Description: "The VLAN ID for this network. Valid range is 0-4096. Common uses:\n" +
@@ -417,6 +418,66 @@ func ResourceNetwork() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
+			"vpn_type": {
+				Description: "The type of VPN for this network. For vpn-client purpose, typically 'wireguard-client'.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"wireguard_client_mode": {
+				Description: "The mode for WireGuard client configuration. Typically 'file' for file-based configuration.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"wireguard_client_configuration_filename": {
+				Description: "The filename for the WireGuard client configuration file.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"wireguard_client_configuration_file": {
+				Description: "The full content of the WireGuard client configuration file.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"wireguard_id": {
+				Description: "The ID of the WireGuard interface.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
+			"routing_table_id": {
+				Description: "The routing table ID for this VPN network.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
+			"firewall_zone_id": {
+				Description: "The firewall zone ID associated with this VPN network.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"mss_clamp": {
+				Description: "MSS clamping setting. Typically 'auto' for automatic clamping.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
+			"mss_clamp_mss": {
+				Description: "The MSS value for clamping.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
+			"interface_mtu": {
+				Description: "The MTU value for the VPN interface.",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
+			"interface_mtu_enabled": {
+				Description: "Whether custom MTU is enabled for the interface.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
+			"external_id": {
+				Description: "The external ID for this VPN network.",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 			"wan_ip": {
 				Description: "The static IPv4 address for WAN interface.\n" +
 					"Required when `wan_type` is 'static'.\n" +
@@ -658,6 +719,19 @@ func resourceNetworkGetResourceData(d *schema.ResourceData, meta interface{}) (*
 		WANGatewayV6:    d.Get("wan_gateway_v6").(string),
 		WANPrefixlen:    d.Get("wan_prefixlen").(int),
 
+		VPNType:                              d.Get("vpn_type").(string),
+		WireguardClientMode:                  d.Get("wireguard_client_mode").(string),
+		WireguardClientConfigurationFilename: d.Get("wireguard_client_configuration_filename").(string),
+		WireguardClientConfigurationFile:     d.Get("wireguard_client_configuration_file").(string),
+		// WireguardId:                         d.Get("wireguard_id").(int), // Field not in struct
+		// RoutingTableId:                      d.Get("routing_table_id").(int), // Field not in struct
+		FirewallZoneID: d.Get("firewall_zone_id").(string),
+		// MssClamp:                           d.Get("mss_clamp").(string), // Field not in struct
+		// MssClampMss:                        d.Get("mss_clamp_mss").(int), // Field not in struct
+		InterfaceMtu:        d.Get("interface_mtu").(int),
+		InterfaceMtuEnabled: d.Get("interface_mtu_enabled").(bool),
+		// ExternalId:                          d.Get("external_id").(string), // Field not in struct
+
 		// this is kinda hacky but ¯\_(ツ)_/¯
 		WANDNS1: append(wanDNS, "")[0],
 		WANDNS2: append(wanDNS, "", "")[1],
@@ -789,6 +863,19 @@ func resourceNetworkSetResourceData(resp *unifi.Network, d *schema.ResourceData,
 	d.Set("wan_type", wanType)
 	d.Set("wan_username", resp.WANUsername)
 	d.Set("x_wan_password", resp.XWANPassword)
+
+	d.Set("vpn_type", resp.VPNType)
+	d.Set("wireguard_client_mode", resp.WireguardClientMode)
+	d.Set("wireguard_client_configuration_filename", resp.WireguardClientConfigurationFilename)
+	d.Set("wireguard_client_configuration_file", resp.WireguardClientConfigurationFile)
+	// d.Set("wireguard_id", resp.WireguardId) // Field not in struct
+	// d.Set("routing_table_id", resp.RoutingTableId) // Field not in struct
+	d.Set("firewall_zone_id", resp.FirewallZoneID)
+	// d.Set("mss_clamp", resp.MssClamp) // Field not in struct
+	// d.Set("mss_clamp_mss", resp.MssClampMss) // Field not in struct
+	d.Set("interface_mtu", resp.InterfaceMtu)
+	d.Set("interface_mtu_enabled", resp.InterfaceMtuEnabled)
+	// d.Set("external_id", resp.ExternalId) // Field not in struct
 
 	return nil
 }
