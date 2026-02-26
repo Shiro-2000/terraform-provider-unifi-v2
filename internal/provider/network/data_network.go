@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+
 	"github.com/filipowm/terraform-provider-unifi/internal/provider/utils"
 
 	"github.com/filipowm/terraform-provider-unifi/internal/provider/base"
@@ -76,6 +77,16 @@ func DataNetwork() *schema.Resource {
 			"dhcp_lease": {
 				Description: "lease time for DHCP addresses.",
 				Type:        schema.TypeInt,
+				Computed:    true,
+			},
+			"dhcp_gateway": {
+				Description: "Default Gateway IP address.",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"dhcp_gateway_enabled": {
+				Description: "Controls whether the default gateway is enabled for this network.",
+				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 
@@ -334,6 +345,8 @@ func dataNetworkRead(ctx context.Context, d *schema.ResourceData, meta interface
 			d.Set("dhcp_dns", dhcpDNS)
 			d.Set("dhcp_start", n.DHCPDStart)
 			d.Set("dhcp_stop", n.DHCPDStop)
+			d.Set("dhcp_gateway", n.DHCPDGateway)
+			d.Set("dhcp_gateway_enabled", n.DHCPDGatewayEnabled)
 			d.Set("dhcp_enabled", n.DHCPDEnabled)
 			d.Set("dhcp_lease", n.DHCPDLeaseTime)
 			d.Set("dhcpd_boot_enabled", n.DHCPDBootEnabled)

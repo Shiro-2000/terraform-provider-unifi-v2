@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/filipowm/terraform-provider-unifi/internal/provider/utils"
 	"regexp"
 	"strings"
+
+	"github.com/filipowm/terraform-provider-unifi/internal/provider/utils"
 
 	"github.com/filipowm/go-unifi/unifi"
 	"github.com/filipowm/terraform-provider-unifi/internal/provider/base"
@@ -139,6 +140,19 @@ func ResourceNetwork() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.IsIPv4Address,
 			},
+			"dhcp_gateway_enabled": {
+				Description: "Controls whether the default gateway is enabled for this network. When enabled:",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
+
+			"dhcp_gateway": {
+				Description:  "Default Gateway IP address.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.IsIPv4Address,
+			},
+
 			"dhcp_enabled": {
 				Description: "Controls whether DHCP server is enabled for this network. When enabled:\n" +
 					"* The network will automatically assign IP addresses to clients\n" +
@@ -574,23 +588,25 @@ func resourceNetworkGetResourceData(d *schema.ResourceData, meta interface{}) (*
 	}
 
 	return &unifi.Network{
-		Name:              d.Get("name").(string),
-		Purpose:           d.Get("purpose").(string),
-		VLAN:              vlan,
-		IPSubnet:          utils.CidrOneBased(d.Get("subnet").(string)),
-		NetworkGroup:      d.Get("network_group").(string),
-		DHCPDStart:        d.Get("dhcp_start").(string),
-		DHCPDStop:         d.Get("dhcp_stop").(string),
-		DHCPDEnabled:      d.Get("dhcp_enabled").(bool),
-		DHCPDLeaseTime:    d.Get("dhcp_lease").(int),
-		DHCPDBootEnabled:  d.Get("dhcpd_boot_enabled").(bool),
-		DHCPDBootServer:   d.Get("dhcpd_boot_server").(string),
-		DHCPDBootFilename: d.Get("dhcpd_boot_filename").(string),
-		DHCPRelayEnabled:  d.Get("dhcp_relay_enabled").(bool),
-		DomainName:        d.Get("domain_name").(string),
-		IGMPSnooping:      d.Get("igmp_snooping").(bool),
-		MdnsEnabled:       d.Get("multicast_dns").(bool),
-		Enabled:           d.Get("enabled").(bool),
+		Name:                d.Get("name").(string),
+		Purpose:             d.Get("purpose").(string),
+		VLAN:                vlan,
+		IPSubnet:            utils.CidrOneBased(d.Get("subnet").(string)),
+		NetworkGroup:        d.Get("network_group").(string),
+		DHCPDStart:          d.Get("dhcp_start").(string),
+		DHCPDStop:           d.Get("dhcp_stop").(string),
+		DHCPDGateway:        d.Get("dhcp_gateway").(string),
+		DHCPDGatewayEnabled: d.Get("dhcp_gateway_enabled").(bool),
+		DHCPDEnabled:        d.Get("dhcp_enabled").(bool),
+		DHCPDLeaseTime:      d.Get("dhcp_lease").(int),
+		DHCPDBootEnabled:    d.Get("dhcpd_boot_enabled").(bool),
+		DHCPDBootServer:     d.Get("dhcpd_boot_server").(string),
+		DHCPDBootFilename:   d.Get("dhcpd_boot_filename").(string),
+		DHCPRelayEnabled:    d.Get("dhcp_relay_enabled").(bool),
+		DomainName:          d.Get("domain_name").(string),
+		IGMPSnooping:        d.Get("igmp_snooping").(bool),
+		MdnsEnabled:         d.Get("multicast_dns").(bool),
+		Enabled:             d.Get("enabled").(bool),
 
 		DHCPDDNSEnabled: len(dhcpDNS) > 0,
 		// this is kinda hacky but ¯\_(ツ)_/¯
@@ -732,6 +748,8 @@ func resourceNetworkSetResourceData(resp *unifi.Network, d *schema.ResourceData,
 	d.Set("dhcp_relay_enabled", resp.DHCPRelayEnabled)
 	d.Set("dhcp_start", resp.DHCPDStart)
 	d.Set("dhcp_stop", resp.DHCPDStop)
+	d.Set("dhcp_gateway", resp.DHCPDGateway)
+	d.Set("dhcp_gateway_enabled", resp.DHCPDGatewayEnabled)
 	d.Set("dhcp_v6_dns_auto", resp.DHCPDV6DNSAuto)
 	d.Set("dhcp_v6_dns", dhcpV6DNS)
 	d.Set("dhcp_v6_enabled", resp.DHCPDV6Enabled)
