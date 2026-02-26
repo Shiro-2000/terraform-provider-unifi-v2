@@ -66,7 +66,7 @@ data "unifi_network" "my_network" {
 - `ipv6_static_subnet` (String) Specifies the static IPv6 subnet (when ipv6_interface_type is 'static').
 - `multicast_dns` (Boolean) Specifies whether Multicast DNS (mDNS) is enabled or not on the network (Controller >=v7).
 - `network_group` (String) The group of the network.
-- `purpose` (String) The purpose of the network. One of `corporate`, `guest`, `wan`, or `vlan-only`.
+- `purpose` (String) The purpose of the network. One of `corporate`, `guest`, `wan`, `vlan-only`, or `vpn-client`.
 - `subnet` (String) The subnet of the network (CIDR address).
 - `vlan_id` (Number) The VLAN ID of the network.
 - `wan_dhcp_v6_pd_size` (Number) Specifies the IPv6 prefix size to request from ISP. Must be a number between 48 and 64.
@@ -83,3 +83,11 @@ data "unifi_network" "my_network" {
 - `wan_type_v6` (String) Specifies the IPV6 WAN connection type. Must be one of either `disabled`, `static`, or `dhcpv6`.
 - `wan_username` (String) Specifies the IPV4 WAN username.
 - `x_wan_password` (String) Specifies the IPV4 WAN password.
+- `vpn_type` (String) The type of VPN for this client network.
+- `wireguard_client_mode` (String) The WireGuard client mode.
+- `wireguard_client_configuration_filename` (String) The filename for the WireGuard client configuration file.
+- `wireguard_client_configuration_file` (String) The full contents of the WireGuard client configuration file.
+- `firewall_zone_id` (String) The firewall zone ID associated with this VPN client network.
+- `interface_mtu` (Number) The Maximum Transmission Unit (MTU) for the VPN interface.
+- `interface_mtu_enabled` (Boolean) Whether custom MTU settings are enabled for the VPN interface.
+- `wireguard_id` (Number) The ID of the WireGuard interface.

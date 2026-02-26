@@ -7,10 +7,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/filipowm/terraform-provider-unifi/internal/provider/utils"
-
 	"github.com/filipowm/go-unifi/unifi"
 	"github.com/filipowm/terraform-provider-unifi/internal/provider/base"
+	"github.com/filipowm/terraform-provider-unifi/internal/provider/utils"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -67,7 +66,6 @@ func ResourceNetwork() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: importNetwork,
 		},
-
 		Schema: map[string]*schema.Schema{
 			"id": {
 				Description: "The ID of the network.",
@@ -117,11 +115,12 @@ func ResourceNetwork() *schema.Resource {
 				ValidateFunc:     utils.CidrValidate,
 			},
 			"network_group": {
-				Description: "The network group for this network. Default is 'LAN'. For WAN networks, use 'WAN' or 'WAN2'. " +
+				Description: "The network group for this network. Defaults to 'LAN' for corporate/guest/vlan-only networks. " +
+					"For WAN networks, use 'WAN' or 'WAN2'. Not applicable for vpn-client networks. " +
 					"Network groups help organize and apply policies to multiple networks.",
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "LAN",
+				Computed: true,
 			},
 			"dhcp_start": {
 				Description: "The starting IPv4 address of the DHCP range. Examples:\n" +
@@ -310,10 +309,10 @@ func ResourceNetwork() *schema.Resource {
 					"* `none` - IPv6 disabled (default)\n" +
 					"* `static` - Static IPv6 addressing\n" +
 					"* `pd` - Prefix Delegation from upstream\n\n" +
-					"Choose based on your IPv6 deployment strategy and ISP capabilities.",
+					"Choose based on your IPv6 deployment strategy and ISP capabilities. Not applicable for vpn-client networks.",
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "none",
+				Computed:     true,
 				ValidateFunc: validateIpV6InterfaceType,
 			},
 			"ipv6_static_subnet": {
@@ -442,6 +441,7 @@ func ResourceNetwork() *schema.Resource {
 				Description: "The ID of the WireGuard interface.",
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Computed:    true,
 			},
 			"routing_table_id": {
 				Description: "The routing table ID for this VPN network.",
@@ -648,12 +648,22 @@ func resourceNetworkGetResourceData(d *schema.ResourceData, meta interface{}) (*
 		return nil, fmt.Errorf("unable to convert wan_dns to string slice: %w", err)
 	}
 
+	purpose := d.Get("purpose").(string)
+	networkGroup := d.Get("network_group").(string)
+	if networkGroup == "" && purpose != "vpn-client" {
+		networkGroup = "LAN"
+	}
+	ipv6InterfaceType := d.Get("ipv6_interface_type").(string)
+	if ipv6InterfaceType == "" && purpose != "vpn-client" {
+		ipv6InterfaceType = "none"
+	}
+
 	return &unifi.Network{
 		Name:                d.Get("name").(string),
-		Purpose:             d.Get("purpose").(string),
+		Purpose:             purpose,
 		VLAN:                vlan,
 		IPSubnet:            utils.CidrOneBased(d.Get("subnet").(string)),
-		NetworkGroup:        d.Get("network_group").(string),
+		NetworkGroup:        networkGroup,
 		DHCPDStart:          d.Get("dhcp_start").(string),
 		DHCPDStop:           d.Get("dhcp_stop").(string),
 		DHCPDGateway:        d.Get("dhcp_gateway").(string),
@@ -690,7 +700,7 @@ func resourceNetworkGetResourceData(d *schema.ResourceData, meta interface{}) (*
 		DHCPDV6Start:     d.Get("dhcp_v6_start").(string),
 		DHCPDV6Stop:      d.Get("dhcp_v6_stop").(string),
 
-		IPV6InterfaceType:       d.Get("ipv6_interface_type").(string),
+		IPV6InterfaceType:       ipv6InterfaceType,
 		IPV6Subnet:              d.Get("ipv6_static_subnet").(string),
 		IPV6PDInterface:         d.Get("ipv6_pd_interface").(string),
 		IPV6PDPrefixid:          d.Get("ipv6_pd_prefixid").(string),

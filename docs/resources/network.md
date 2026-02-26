@@ -4,7 +4,7 @@ page_title: "unifi_network Resource - terraform-provider-unifi"
 subcategory: ""
 description: |-
   The unifi_network resource manages networks in your UniFi environment, including WAN, LAN, and VLAN networks. This resource enables you to:
-  Create and manage different types of networks (corporate, guest, WAN, VLAN-only)Configure network addressing and DHCP settingsSet up IPv6 networking featuresManage DHCP relay and DNS settingsConfigure network groups and VLANs
+  Create and manage different types of networks (corporate, guest, WAN, VLAN-only, vpn-client)Configure network addressing and DHCP settingsSet up IPv6 networking featuresManage DHCP relay and DNS settingsConfigure network groups and VLANs
   Common use cases include:
   Setting up corporate and guest networks with different security policiesConfiguring WAN connectivity with various authentication methodsCreating VLANs for network segmentationManaging DHCP and DNS services for network clients
 ---
@@ -13,7 +13,7 @@ description: |-
 
 The `unifi_network` resource manages networks in your UniFi environment, including WAN, LAN, and VLAN networks. This resource enables you to:
 
-* Create and manage different types of networks (corporate, guest, WAN, VLAN-only)
+* Create and manage different types of networks (corporate, guest, WAN, VLAN-only, vpn-client)
 * Configure network addressing and DHCP settings
 * Set up IPv6 networking features
 * Manage DHCP relay and DNS settings
@@ -67,6 +67,7 @@ resource "unifi_network" "wan" {
 * `guest` - Isolated network for guest access with limited permissions
 * `wan` - External network connection (WAN uplink)
 * `vlan-only` - VLAN network without DHCP services
+* `vpn-client` - VPN client network (e.g., WireGuard)
 
 ### Optional
 
@@ -153,7 +154,7 @@ Recommended for networks with multicast traffic.
 * `static` - Static IPv6 addressing
 * `pd` - Prefix Delegation from upstream
 
-Choose based on your IPv6 deployment strategy and ISP capabilities. Defaults to `none`.
+Choose based on your IPv6 deployment strategy and ISP capabilities. Not applicable for vpn-client networks.
 - `ipv6_pd_interface` (String) The WAN interface to use for IPv6 Prefix Delegation. Options:
 * `wan` - Primary WAN interface
 * `wan2` - Secondary WAN interface
@@ -192,7 +193,7 @@ Must be a valid IPv6 subnet allocated to your organization.
 * Allows device discovery (e.g., printers, Chromecasts)
 * Supports zero-configuration networking
 * Available on Controller version 7 and later
-- `network_group` (String) The network group for this network. Default is 'LAN'. For WAN networks, use 'WAN' or 'WAN2'. Network groups help organize and apply policies to multiple networks. Defaults to `LAN`.
+- `network_group` (String) The network group for this network. Defaults to 'LAN' for corporate/guest/vlan-only networks. For WAN networks, use 'WAN' or 'WAN2'. Not applicable for vpn-client networks. Network groups help organize and apply policies to multiple networks.
 - `network_isolation_enabled` (Boolean) Enables network isolation. When enabled:
 * Prevents communication between clients on this network
 * Each client can only communicate with the gateway
@@ -255,6 +256,14 @@ Choose based on your ISP's requirements.
 * Required for PPPoE connections
 * May be needed for some ISP configurations
 * Must be kept secret
+- `vpn_type` (String) The type of VPN for this client network. Currently supports WireGuard configurations.
+- `wireguard_id` (Number) The ID of the WireGuard interface. This is a computed value and cannot be set.
+- `wireguard_client_mode` (String) The WireGuard client mode. Options include client-side configurations for establishing VPN connections.
+- `wireguard_client_configuration_filename` (String) The filename for the WireGuard client configuration file. Used to identify the specific configuration to load.
+- `wireguard_client_configuration_file` (String) The full contents of the WireGuard client configuration file. Contains private key, endpoint, and routing information.
+- `firewall_zone_id` (String) The firewall zone ID to associate with this VPN client network. Controls traffic policies for the VPN interface.
+- `interface_mtu` (Number) The Maximum Transmission Unit (MTU) for the VPN interface. Controls packet size limits.
+- `interface_mtu_enabled` (Boolean) Enables custom MTU settings for the VPN interface. When enabled, uses the specified interface_mtu value.
 
 ### Read-Only
 
